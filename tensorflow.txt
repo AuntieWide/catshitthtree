@@ -1,0 +1,59 @@
+import  tensorflow as tf
+import  numpy as np
+import  matplotlib.pyplot as plt
+import  os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+numdots=300
+inputdata=[]
+for i in range(numdots):
+    x=np.random.normal(0.8,10)
+    
+    y=x**2+1*np.random.normal(0,1) - 25
+    inputdata.append([x,y])
+x_data=[v[0] for v in inputdata]
+y_data=[v[1] for v in inputdata]
+ 
+plt.scatter(x_data,y_data)
+plt.show()
+
+
+#构建神经网络模式
+x_data=np.array([x_data]).reshape(-1,1)
+y_data=np.array([y_data]).reshape(-1,1)
+ 
+x_h=tf.placeholder(dtype=tf.float64,shape=[None,1],name="xh")
+y_h=tf.placeholder(dtype=tf.float64,shape=[None,1],name="yh")
+ 
+w=tf.Variable(np.random.normal(0,0.3,size=[1,20]),dtype=tf.float64)
+b=tf.Variable(np.random.normal(0.0,0.5,size=[20]),dtype=tf.float64)
+ 
+y0=tf.nn.relu(tf.matmul(x_h,w)+b)
+ 
+w1=tf.Variable(np.random.normal(0,0.5,size=[20,1]),dtype=tf.float64)
+b1=tf.Variable(np.random.normal(0,0.8,size=[1]),dtype=tf.float64)
+ 
+y=(tf.matmul(y0,w1)+b1)
+los=tf.reduce_mean((tf.square(y-y_h)))
+tran=tf.train.GradientDescentOptimizer(0.001).minimize(los)
+
+
+#开始训练神经网络
+sess=tf.Session()
+sess.run(tf.global_variables_initializer())
+for i in range(100000):
+#for i in range(50000):
+    sess.run(tran,feed_dict={x_h:x_data,y_h:y_data})
+    if(i%100==0 ):
+        los2=sess.run(los,feed_dict={x_h:x_data,y_h:y_data})
+        print("epoch=", i, ",los=", los2)
+        if (los2 <= 1):
+            break
+
+#用神经网络计算X上的所有点的Y值，绘制图形，看效果
+testx=np.linspace(-30,30,60,dtype=np.float32).reshape(-1,1)
+testy=sess.run(y,feed_dict={x_h:testx})
+#plt.scatter(testx,testy)
+plt.scatter(x_data,y_data)
+plt.plot(testx,testy)
+plt.show()
